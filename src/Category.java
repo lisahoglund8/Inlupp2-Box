@@ -2,29 +2,31 @@ import java.awt.Color;
 
 public class Category {
 
-	private Color färg;
-	private String namn;
+	private Color color;
+	private String name;
 
-	Category(String namn, Color färg){
-		this.namn = namn;
-		this.färg = färg;
-	}
-	public String getNamn(){
-		return namn;
-	}
-	public Color getFärg(){
-		return färg;
+	Category(String namn, Color color){
+		this.name = namn;
+		this.color = color;
 	}
 
-	//	public void showPlaces(){
-	//		
-	//	}
-	//	public void hidePlaces(){
-	//		
-	//	}
+	public String getName() {
+		return name;
+	}
 
-	public String toString(){
-		return getNamn();
+	public Color getColor(){
+		return color;
+	}
+
+	// public void showPlaces(){
+	//
+	// }
+	// public void hidePlaces(){
+	//
+	// }
+
+	public String toString() {
+		return getName();
 	}
 
 }

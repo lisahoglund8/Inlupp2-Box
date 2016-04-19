@@ -3,25 +3,27 @@ import java.awt.Graphics;
 
 public class DescribedPlace extends Place {
 
-	private String beskrivning;
-	DescribedPlace(String namn, Category category, Position position, String beskrivning){
-		super(namn, category, position);
-		this.beskrivning = beskrivning;
+	private String description;
+
+	DescribedPlace(String name, Category category, Position position, String description) {
+		super(name, category, position);
+		this.description = description;
 
 	}
-	public String getBeskrivning() {
-		return beskrivning;
+
+	public String getDescription() {
+		return description;
 	}
-	public void paintComponent(Graphics g){
+
+	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if(unFolded()){
+		if (unFolded()) {
 			g.setColor(Color.yellow);
-			g.fillRect(0,0, 100, 50);
+			g.fillRect(0, 0, 100, 50);
 			g.setColor(Color.BLACK);
 
-			g.drawString(getNamn(), 10, 15);
-			g.drawString(getBeskrivning(), 10, 30);
-			System.err.println(getNamn()+ "   " + getPosition().getX()+ "   " + getPosition().getY());
+			g.drawString(getPlaceName(), 10, 15);
+			g.drawString(getDescription(), 10, 30);
 		}
 
 	}
