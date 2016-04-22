@@ -1,23 +1,22 @@
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
 public class NamedPlaceFormular extends JPanel {
-	private JTextField field1;
+	private JTextField field;
 
 	NamedPlaceFormular() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		JPanel first = new JPanel();
-		field1 = new JTextField(10);
+		field = new JTextField(10);
 		first.add(new JLabel("Namn:"));
-		first.add(field1);
+		first.add(field);
 		panel.add(first);
 		this.add(panel);
 	}
 
-	public String getPlaceName() {
-		return field1.getText();
+	public String getNamn() {
+		return field.getText();
 	}
 }

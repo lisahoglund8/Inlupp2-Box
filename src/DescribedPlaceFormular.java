@@ -1,7 +1,6 @@
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
 public class DescribedPlaceFormular extends JPanel {
 	private JTextField field1;
@@ -23,12 +22,12 @@ public class DescribedPlaceFormular extends JPanel {
 		this.add(panel);
 	}
 
-	public String getPlaceName() {
+	public String getNamn() {
 		return field1.getText();
 	}
-
-	public String getDescription(){
+	public String getBeskrivning(){
 		return field2.getText();
 	}
 
 }
+

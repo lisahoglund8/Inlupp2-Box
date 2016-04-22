@@ -1,18 +1,22 @@
 import java.awt.Color;
 import java.awt.Graphics;
 
-public class NamedPlace extends Place {
-	NamedPlace(String name, Category category, Position position) {
+import javax.swing.BorderFactory;
+import javax.swing.border.Border;
+
+public class NamedPlace extends Place{
+	NamedPlace(String name, Category category, Position position){
 		super(name, category, position);
 	}
-
-	public void paintComponent(Graphics g) {
+	
+	public void paintComponent(Graphics g){
 		super.paintComponent(g);
-		if (unFolded()) {
+		if(unFolded()){
 			g.setColor(Color.yellow);
-			g.fillRect(0, 0, 100, 100);
+			g.fillRect(0,0, 100, 50);
 			g.setColor(Color.BLACK);
-			g.drawString(getName(), 10, 15);
+			
+			g.drawString(getNamn(), 10, 15);
 		}
 	}
 
