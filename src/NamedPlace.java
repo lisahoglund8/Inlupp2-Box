@@ -1,9 +1,6 @@
 import java.awt.Color;
 import java.awt.Graphics;
 
-import javax.swing.BorderFactory;
-import javax.swing.border.Border;
-
 public class NamedPlace extends Place{
 	NamedPlace(String name, Category category, Position position){
 		super(name, category, position);

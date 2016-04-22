@@ -9,6 +9,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,7 +66,7 @@ class Box extends JFrame{
 	private ArrayList<Place> marked = new ArrayList<>();
 	private Map<Category, ArrayList<Place>> categoryMap = new HashMap<>();
 	private Map<Position, Place> positionMap = new HashMap<>();
-	
+	private boolean isSaved = true;
 	private Category[] categoryArray;
 
 	public Box(){
@@ -99,11 +102,11 @@ class Box extends JFrame{
 		right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
 		add(right, BorderLayout.EAST);
 		right.add(new JLabel("Category"));
-		
+
 		categoryArray = new Category []{ new Category("Buss", Color.red), new Category("Tunnelbana", Color.blue), new Category("Tåg", Color.green) };
 
 		model = new DefaultListModel<>();
-	
+
 		list = new JList<>(model); 
 		model.addElement(categoryArray[0]);
 		model.addElement(categoryArray[1]);
@@ -133,7 +136,7 @@ class Box extends JFrame{
 		hideButton = new JButton("Hide");
 		hideButton.addActionListener(new hideLyss());
 		up.add(hideButton);
-	
+
 		removeButton = new JButton("Remove");
 		removeButton.addActionListener(new RemoveLyss());
 		up.add(removeButton);
@@ -146,7 +149,9 @@ class Box extends JFrame{
 		setLocation(200,200);
 		pack();
 		setVisible(true);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(Box.DO_NOTHING_ON_CLOSE);
+		addWindowListener(new ExitLyss());
+
 	}
 
 	public static void main(String[] args){
@@ -154,18 +159,18 @@ class Box extends JFrame{
 	}
 	class ListLyss implements ListSelectionListener{
 		public void valueChanged(ListSelectionEvent lse){	
-			
+
 			Category category = list.getSelectedValue();
-			
+
 			if(category != null){
 				if(categoryMap.containsKey(category)){
-				for(Place p : categoryMap.get(category)){
-					p.setHidden(false);
-				}
+					for(Place p : categoryMap.get(category)){
+						p.setHidden(false);
+					}
 				}
 				repaint();
 			}
-			
+
 		}	
 	}
 	class PicturePanel extends JPanel{
@@ -181,7 +186,7 @@ class Box extends JFrame{
 			g.drawImage(picture.getImage(), 0, 0, this);
 		}
 	}
-	
+
 	public class hideCategory implements ActionListener {
 
 		@Override
@@ -214,17 +219,13 @@ class Box extends JFrame{
 			Position p = null;
 			for(int x = e.getX()-75; x < e.getX()+75; x++){
 				for(int y = e.getY()-100; y < e.getY()+100; y++){
-			
 					if(positionMap.containsKey(p = new Position(x,y))){
 						positionMap.get(p).setHidden(false);
-						
 					}
 				}
 			}
 			picturePanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			repaint();
-			
-			
 			picturePanel.removeMouseListener(this);
 		}
 
@@ -251,7 +252,7 @@ class Box extends JFrame{
 			String name = textField.getText();
 			ArrayList<Place> mappen = map.get(name);
 			if(mappen == null){
-				JOptionPane.showMessageDialog(Box.this, "Kan inte hitta");
+				JOptionPane.showMessageDialog(Box.this, "Kan inte hitta " + name);
 			}
 			else{
 				for(Place p : mappen){
@@ -261,39 +262,70 @@ class Box extends JFrame{
 			}
 		}
 	}
-	
+
 	class RemoveLyss implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
-		for(Place p : marked){
-			categoryMap.get(p.getCategory()).remove(p);
-			if(categoryMap.get(p.getCategory()).isEmpty())
-				categoryMap.remove(p.getCategory());
-			map.get(p.getNamn()).remove(p);
-			if(map.get(p.getNamn()).isEmpty())
-				map.remove(p.getNamn());
-			positionMap.get(p.getPosition()).remove(p);
-			positionMap.remove(p.getPosition());
-			picturePanel.remove(p);	
-		}
-		marked.clear();
-		repaint();
-			
+			for(Place p : marked){
+				categoryMap.get(p.getCategory()).remove(p);
+				if(categoryMap.get(p.getCategory()).isEmpty())
+					categoryMap.remove(p.getCategory());
+				map.get(p.getNamn()).remove(p);
+				if(map.get(p.getNamn()).isEmpty())
+					map.remove(p.getNamn());
+				positionMap.get(p.getPosition()).remove(p);
+				positionMap.remove(p.getPosition());
+				picturePanel.remove(p);	
+			}
+			isSaved = false;
+			marked.clear();
+			repaint();
+
 		}
 	}
-	class CreatePlace implements ActionListener{
+	class CreatePlace implements ActionListener {
 		public void actionPerformed(ActionEvent ave){
 			picturePanel.addMouseListener(musLyss);
 			picturePanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		}
 	}
-	class ExitLyss implements ActionListener{
-		public void actionPerformed(ActionEvent ave){
+	class ExitLyss extends WindowAdapter implements ActionListener {
+		private boolean shouldWindowBeClosed() {
 
-			//Varningsruta om man ej sparat, se under
-
-			System.exit(0);
-
+			if (isSaved == false){
+				int a = JOptionPane.showConfirmDialog(null, "Det finns osparade förändringar, vill du avsluta ändå?");
+				if (a == JOptionPane.OK_OPTION){
+					return true;
+				} else {
+					return false;
+				}
+			} else{
+				return true;
+			}
 		}
+
+		public void actionPerformed(ActionEvent ave){
+			 boolean close = shouldWindowBeClosed();
+			 if (close){
+				 System.exit(0);
+			 }
+		}
+
+		@Override
+		public void windowClosing(WindowEvent e) {
+			super.windowClosing(e);
+			System.out.println("Closing window!");
+			if (shouldWindowBeClosed()) {
+				dispose();
+			}
+		}
+
+		@Override
+		public void windowClosed(WindowEvent e) {
+			super.windowClosed(e);
+			System.out.println("Window closed!");
+			System.exit(0);
+		}
+
 	}
 	class hideLyss implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
@@ -312,58 +344,58 @@ class Box extends JFrame{
 					marked.remove(p);
 				}else{
 					marked.add(p);
+				}
 			}
 		}
 	}
-}
-	
+
 	class saveLyss implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
-				try{
-					int answer = chooseFile.showOpenDialog(Box.this);
-					if (answer != JFileChooser.APPROVE_OPTION)        
-						return;
-						FileWriter utfil = new FileWriter(chooseFile.getSelectedFile().getAbsolutePath()); //namn på filen
-						PrintWriter ut = new PrintWriter(utfil);
-						
-						//Typ, kategori, x-koordinat, y-koordinat, namn, (beskrivning)	
-						for(Place p : positionMap.values()){
-							if(p instanceof NamedPlace){
-								ut.println("Named"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
-							p.getPosition().getY() + "," + p.getNamn());
-							}
-							if(p instanceof DescribedPlace){
-								ut.println("Described"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
-										p.getPosition().getY() + "," + p.getNamn() +"," + ((DescribedPlace) p).getBeskrivning());
-							}
-							repaint();
-						}
-							
-						ut.close();
-						utfil.close();
-						
+			try{
+				int answer = chooseFile.showOpenDialog(Box.this);
+				if (answer != JFileChooser.APPROVE_OPTION)        
+					return;
+				FileWriter utfil = new FileWriter(chooseFile.getSelectedFile().getAbsolutePath()); //namn på filen
+				PrintWriter ut = new PrintWriter(utfil);
+
+				//Typ, kategori, x-koordinat, y-koordinat, namn, (beskrivning)	
+				for(Place p : positionMap.values()){
+					if(p instanceof NamedPlace){
+						ut.println("Named"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
+								p.getPosition().getY() + "," + p.getNamn());
 					}
-					catch(FileNotFoundException e){
-						JOptionPane.showMessageDialog(null, "Kan inte öppna " + e);
+					if(p instanceof DescribedPlace){
+						ut.println("Described"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
+								p.getPosition().getY() + "," + p.getNamn() +"," + ((DescribedPlace) p).getBeskrivning());
 					}
-					catch(IOException e1){
-						JOptionPane.showMessageDialog(null, "Fel " + e1.getMessage());
-					}
+					repaint();
 				}
+				isSaved = true;
+				ut.close();
+				utfil.close();
+
 			}
+			catch(FileNotFoundException e){
+				JOptionPane.showMessageDialog(null, "Kan inte öppna " + e);
+			}
+			catch(IOException e1){
+				JOptionPane.showMessageDialog(null, "Fel " + e1.getMessage());
+			}
+		}
+	}
 
 
 	class openLyss implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
 			try{
-				
+
 				int answer = chooseFile.showOpenDialog(Box.this);
 				if (answer != JFileChooser.APPROVE_OPTION)        
 					return;
 				FileReader infil = new FileReader(chooseFile.getSelectedFile().getAbsolutePath()); //namn på fil
 				BufferedReader in = new BufferedReader(infil);
 				String line;
-							
+
 				while((line = in.readLine()) != null){
 					String [] tokens = line.split(","); 
 					String place = tokens[0]; 
@@ -372,43 +404,40 @@ class Box extends JFrame{
 					int y = Integer.parseInt(tokens[3]);
 					Position position = new Position(x,y);
 					String namn = tokens[4];
-					
-					
+
+
 					Category newCategory = null;
 					for(Category c : categoryArray){
 						if(c.getNamn().equals(kategori)){
 							newCategory = c;
 						}
-						
+
 					}
 					if(newCategory == null){
 						newCategory = new Category("None", Color.black);
 					}
-					
+
 
 					if(place.equalsIgnoreCase("named")){
-					NamedPlace namedPlace = new NamedPlace(namn, newCategory, position);
-					addPlaceToPlaceMap(namedPlace.getNamn(), namedPlace);
-					addPlaceToCategory(namedPlace.getCategory(), namedPlace);
-					positionMap.putIfAbsent(position, namedPlace);
-					picturePanel.add(namedPlace);
+						NamedPlace namedPlace = new NamedPlace(namn, newCategory, position);
+						addToCollections(position, namedPlace);
+						picturePanel.setLayout(null);
+						picturePanel.add(namedPlace);
+
 					}
 					else{
-					String beskrivning = tokens [5];
-					DescribedPlace describedPlace = new DescribedPlace(namn, newCategory, position, beskrivning);
-					addPlaceToPlaceMap(describedPlace.getNamn(), describedPlace);
-					addPlaceToCategory(describedPlace.getCategory(), describedPlace);
-					positionMap.putIfAbsent(position, describedPlace);
-					picturePanel.add(describedPlace);
-					}	
-					
-					
-				
+						String beskrivning = tokens [5];
+						DescribedPlace describedPlace = new DescribedPlace(namn, newCategory, position, beskrivning);
+						addToCollections(position, describedPlace);
+						picturePanel.setLayout(null);
+						picturePanel.add(describedPlace);
+					}		
 				}
+				isSaved = false;
 				repaint();
 				in.close();
 				infil.close();
-				 
+
 			}catch(FileNotFoundException e){
 				JOptionPane.showMessageDialog(null, "Kan inte öppna  " + e);
 			}
@@ -451,11 +480,10 @@ class Box extends JFrame{
 				place = new DescribedPlace(nameDescription, category, position, description);
 				break;
 			}
+			isSaved = false;
 			picturePanel.add(place);
 			place.addMouseListener(new hideMouseLyss());
-			addPlaceToPlaceMap(place.getNamn(), place);
-			addPlaceToCategory(place.getCategory(), place);
-			positionMap.putIfAbsent(position, place);
+			addToCollections(position, place);
 			list.clearSelection();
 			picturePanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			picturePanel.removeMouseListener(musLyss);
@@ -465,7 +493,7 @@ class Box extends JFrame{
 			picturePanel.validate();
 		}
 	}
-	
+
 	public void addPlaceToPlaceMap(String name, Place place){
 		if(map.get(name) == null){
 			map.put(name, new ArrayList<Place>());
@@ -479,5 +507,16 @@ class Box extends JFrame{
 		}
 		categoryMap.get(category).add(place);
 
+	}
+
+	/**
+	 * Adds new Place to all collections needed for search, category toggling and the position map.
+	 * @param position Position of Place (used as key)
+	 * @param place Place to add to all collections.
+	 */
+	private void addToCollections(Position position, Place place) {
+		addPlaceToPlaceMap(place.getNamn(), place);
+		addPlaceToCategory(place.getCategory(), place);
+		positionMap.putIfAbsent(position, place);
 	}
 }
