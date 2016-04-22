@@ -325,8 +325,6 @@ class Box extends JFrame{
 						return;
 						FileWriter utfil = new FileWriter(chooseFile.getSelectedFile().getAbsolutePath()); //namn på filen
 						PrintWriter ut = new PrintWriter(utfil);
-						
-						//Typ, kategori, x-koordinat, y-koordinat, namn, (beskrivning)	
 						for(Place p : positionMap.values()){
 							if(p instanceof NamedPlace){
 								ut.println("Named"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
@@ -391,6 +389,7 @@ class Box extends JFrame{
 					addPlaceToPlaceMap(namedPlace.getNamn(), namedPlace);
 					addPlaceToCategory(namedPlace.getCategory(), namedPlace);
 					positionMap.putIfAbsent(position, namedPlace);
+					picturePanel.setLayout(null); //Konstig lösning
 					picturePanel.add(namedPlace);
 					}
 					else{
@@ -399,6 +398,7 @@ class Box extends JFrame{
 					addPlaceToPlaceMap(describedPlace.getNamn(), describedPlace);
 					addPlaceToCategory(describedPlace.getCategory(), describedPlace);
 					positionMap.putIfAbsent(position, describedPlace);
+					picturePanel.setLayout(null); //Konstig lösning
 					picturePanel.add(describedPlace);
 					}	
 					
