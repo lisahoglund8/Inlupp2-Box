@@ -9,14 +9,14 @@ public class Category {
 		this.name = name;
 		this.color = color;
 	}
-	public String getNamn(){
+	public String getName(){
 		return name;
 	}
 	public Color getColor(){
 		return color;
 	}
 	public String toString(){
-		return getNamn();
+		return getName();
 	}
 	@Override
 	public int hashCode() {

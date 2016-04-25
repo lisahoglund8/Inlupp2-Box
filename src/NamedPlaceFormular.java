@@ -1,6 +1,4 @@
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 
 public class NamedPlaceFormular extends JPanel {
 	private JTextField field;

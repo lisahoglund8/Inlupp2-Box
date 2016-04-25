@@ -13,7 +13,7 @@ public class NamedPlace extends Place{
 			g.fillRect(0,0, 100, 50);
 			g.setColor(Color.BLACK);
 			
-			g.drawString(getNamn(), 10, 15);
+			g.drawString(getPlaceName(), 10, 15);
 		}
 	}
 

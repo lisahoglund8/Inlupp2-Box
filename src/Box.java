@@ -8,10 +8,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,7 +18,6 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.BoxLayout;
@@ -47,11 +44,10 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 class Box extends JFrame{
-
 	private JButton searchButton, hideButton, removeButton, whatIsHereButton, hideCategoryButton;
 	private JTextField textField;
-	private String[] alternativ = {"Namn","Beskrivning"};
-	private JComboBox<String> alternativBox = new JComboBox<String>(alternativ);
+	private String[] namedOrDescribed = {"Namn","Beskrivning"};
+	private JComboBox<String> namedOrDescribedBox = new JComboBox<String>(namedOrDescribed);
 	private JMenuBar menuRow;
 	private JMenu menu;
 	private JMenuItem newMapMenu, loadPlacesMenu, saveMenu, exitMenu;
@@ -60,36 +56,31 @@ class Box extends JFrame{
 	private JScrollPane scroll;
 	private	JFileChooser chooseFile = new JFileChooser(".");
 	private PicturePanel picturePanel = null;
-	private JScrollPane scrolla = null;
-	private MusLyss musLyss = new MusLyss();
-	private Map<String, ArrayList<Place>> map = new HashMap<>();
+	private JScrollPane scrollPicturePanel = null;
+	private CreatePlaceByMouseClicked createPlaceByMouseClicked = new CreatePlaceByMouseClicked();
+	private Map<String, ArrayList<Place>> nameMap = new HashMap<>();
 	private ArrayList<Place> marked = new ArrayList<>();
 	private Map<Category, ArrayList<Place>> categoryMap = new HashMap<>();
 	private Map<Position, Place> positionMap = new HashMap<>();
 	private boolean isSaved = true;
 	private Category[] categoryArray;
+	private Place place = null;
 
 	public Box(){
 		super("Inlupp 2 Prog2");
-		FileFilter bildFilter = new FileNameExtensionFilter("Bilder","jpg",
-				"gif","png");
-		chooseFile.setFileFilter(bildFilter);
 		menuRow = new JMenuBar();
-
 		menu = new JMenu("Archive");	
 		menu.setMnemonic(KeyEvent.VK_A);
-		//		menu.getAccessibleContext().setAccessibleDescription(
-		//				"The only menu in this program that has menu items");
 		menuRow.add(menu);
 
 		newMapMenu = new JMenuItem("New map");
 		newMapMenu.addActionListener(new OpenPicture());
 		loadPlacesMenu = new JMenuItem("Load places");
-		loadPlacesMenu.addActionListener(new openLyss());
+		loadPlacesMenu.addActionListener(new OpenFileListener());
 		saveMenu = new JMenuItem("Save");
-		saveMenu.addActionListener(new saveLyss());
+		saveMenu.addActionListener(new SaveListener());
 		exitMenu = new JMenuItem("Exit");
-		exitMenu.addActionListener(new ExitLyss());
+		exitMenu.addActionListener(new ExitListener());
 
 		menu.add(newMapMenu);
 		menu.add(loadPlacesMenu);
@@ -102,11 +93,11 @@ class Box extends JFrame{
 		right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
 		add(right, BorderLayout.EAST);
 		right.add(new JLabel("Category"));
-		
+
 		categoryArray = new Category []{ new Category("Buss", Color.red), new Category("Tunnelbana", Color.blue), new Category("Tåg", Color.green) };
 
 		model = new DefaultListModel<>();
-	
+
 		list = new JList<>(model); 
 		model.addElement(categoryArray[0]);
 		model.addElement(categoryArray[1]);
@@ -116,61 +107,59 @@ class Box extends JFrame{
 		list.setBorder(e);
 		scroll = new JScrollPane(list);
 		right.add(scroll);
-		list.addListSelectionListener(new ListLyss());
+		list.addListSelectionListener(new ListListener());
 
 		hideCategoryButton = new JButton("Hide category");
-		hideCategoryButton.addActionListener(new hideCategory());
+		hideCategoryButton.addActionListener(new HideCategory());
 		right.add(hideCategoryButton);
 		right.setBorder(e);
 
 		JPanel up = new JPanel();
 		add(up, BorderLayout.NORTH);
 		up.add(new JLabel("New:"));
-		up.add(alternativBox);
-		textField = new JTextField("Sök", 10);
-		textField.addActionListener(new SearchLyss());
+		up.add(namedOrDescribedBox);
+		textField = new JTextField("Search", 10);
+		textField.addActionListener(new SearchListener());
 		up.add(textField);
 
 		searchButton = new JButton("Search");
+		searchButton.addActionListener(new SearchListener());
 		up.add(searchButton);
 		hideButton = new JButton("Hide");
-		hideButton.addActionListener(new hideLyss());
+		hideButton.addActionListener(new HideListener());
 		up.add(hideButton);
-	
+
 		removeButton = new JButton("Remove");
-		removeButton.addActionListener(new RemoveLyss());
+		removeButton.addActionListener(new RemoveListener());
 		up.add(removeButton);
 		whatIsHereButton = new JButton("What is here?");
-		whatIsHereButton.addActionListener(new whatIsHere());
+		whatIsHereButton.addActionListener(new WhatIsHere());
 		up.add(whatIsHereButton);
 
-		alternativBox.addActionListener(new CreatePlace());
+		namedOrDescribedBox.addActionListener(new CreatePlace());
 
 		setLocation(200,200);
 		pack();
 		setVisible(true);
 		setDefaultCloseOperation(Box.DO_NOTHING_ON_CLOSE);
-		addWindowListener(new ExitLyss());
+		addWindowListener(new ExitListener());
 
 	}
 
-	public static void main(String[] args){
-		new Box();	
-	}
-	class ListLyss implements ListSelectionListener{
+	class ListListener implements ListSelectionListener{
 		public void valueChanged(ListSelectionEvent lse){	
-			
+
 			Category category = list.getSelectedValue();
-			
+
 			if(category != null){
 				if(categoryMap.containsKey(category)){
-				for(Place p : categoryMap.get(category)){
-					p.setHidden(false);
-				}
+					for(Place p : categoryMap.get(category)){
+						p.setHidden(false);
+					}
 				}
 				repaint();
 			}
-			
+
 		}	
 	}
 	class PicturePanel extends JPanel{
@@ -186,8 +175,8 @@ class Box extends JFrame{
 			g.drawImage(picture.getImage(), 0, 0, this);
 		}
 	}
-	
-	public class hideCategory implements ActionListener {
+
+	class HideCategory implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
@@ -202,25 +191,28 @@ class Box extends JFrame{
 		}
 
 	}
-	public class whatIsHere implements ActionListener {
+	class WhatIsHere implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			picturePanel.addMouseListener(new whatIsHereClickListener());
+			picturePanel.addMouseListener(new WhatIsHereClickListener());
 			picturePanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
 		}
 
 	}
-	public class whatIsHereClickListener extends MouseAdapter {
+	class WhatIsHereClickListener extends MouseAdapter {
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			Position p = null;
 			for(int x = e.getX()-75; x < e.getX()+75; x++){
+				System.out.println("Xloop");
 				for(int y = e.getY()-100; y < e.getY()+100; y++){
+					System.out.println("Yloop");
 					if(positionMap.containsKey(p = new Position(x,y))){
 						positionMap.get(p).setHidden(false);
+						System.out.println("ifsatsen");
 					}
 				}
 			}
@@ -232,25 +224,51 @@ class Box extends JFrame{
 	}
 	class OpenPicture implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
+			if(!isSaved){
+				if(!confirm()){
+					return;
+				}
+
+			}
+			FileFilter pictureFilter = new FileNameExtensionFilter("Bilder","jpg",
+					"gif","png");
+			chooseFile.setFileFilter(pictureFilter);
 			int answer = chooseFile.showOpenDialog(Box.this);
 			if (answer != JFileChooser.APPROVE_OPTION)
 				return;
 			File file = chooseFile.getSelectedFile();
 			String fileName = file.getAbsolutePath();
-			if (scrolla != null)
-				remove(scrolla);
+			if (scrollPicturePanel != null)
+				remove(scrollPicturePanel);
 			picturePanel = new PicturePanel(fileName);
-			scrolla = new JScrollPane(picturePanel);
-			add(scrolla);
+			scrollPicturePanel = new JScrollPane(picturePanel);
+			add(scrollPicturePanel);
 			setSize(800, 600);
 			validate();
 			repaint();
 		}
 	}
-	class SearchLyss implements ActionListener{
+	private boolean confirm(){
+		int a = JOptionPane.showConfirmDialog(Box.this, "Finns osparade förändringar, vill du fortsätta ändå?", "Fel", JOptionPane.WARNING_MESSAGE);
+		if(a != JOptionPane.OK_OPTION){
+			return false;
+		}
+		else{
+			picturePanel.removeAll();
+			nameMap.clear();
+			marked.clear();
+			categoryMap.clear();
+			positionMap.clear();
+			repaint();
+			revalidate();
+			return true;
+
+		}
+	}
+	class SearchListener implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
 			String name = textField.getText();
-			ArrayList<Place> mappen = map.get(name);
+			ArrayList<Place> mappen = nameMap.get(name);
 			if(mappen == null){
 				JOptionPane.showMessageDialog(Box.this, "Kan inte hitta " + name);
 			}
@@ -262,33 +280,33 @@ class Box extends JFrame{
 			}
 		}
 	}
-	
-	class RemoveLyss implements ActionListener{
+
+	class RemoveListener implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
-		for(Place p : marked){
-			categoryMap.get(p.getCategory()).remove(p);
-			if(categoryMap.get(p.getCategory()).isEmpty())
-				categoryMap.remove(p.getCategory());
-			map.get(p.getNamn()).remove(p);
-			if(map.get(p.getNamn()).isEmpty())
-				map.remove(p.getNamn());
-			positionMap.get(p.getPosition()).remove(p);
-			positionMap.remove(p.getPosition());
-			picturePanel.remove(p);	
-		}
+			for(Place p : marked){
+				categoryMap.get(p.getCategory()).remove(p);
+				if(categoryMap.get(p.getCategory()).isEmpty())
+					categoryMap.remove(p.getCategory());
+				nameMap.get(p.getPlaceName()).remove(p);
+				if(nameMap.get(p.getPlaceName()).isEmpty());
+				nameMap.remove(p.getPlaceName());
+				positionMap.get(p.getPosition()).remove(p);
+				positionMap.remove(p.getPosition());
+				picturePanel.remove(p);	
+			}
 			isSaved = false;
-		marked.clear();
-		repaint();
-			
+			marked.clear();
+			repaint();
+
 		}
 	}
 	class CreatePlace implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
-			picturePanel.addMouseListener(musLyss);
+			picturePanel.addMouseListener(createPlaceByMouseClicked);
 			picturePanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		}
 	}
-	class ExitLyss extends WindowAdapter implements ActionListener {
+	class ExitListener extends WindowAdapter implements ActionListener {
 		private boolean shouldWindowBeClosed() {
 
 			if (isSaved == false){
@@ -304,16 +322,15 @@ class Box extends JFrame{
 		}
 
 		public void actionPerformed(ActionEvent ave){
-			 boolean close = shouldWindowBeClosed();
-			 if (close){
-				 System.exit(0);
-			 }
+			boolean close = shouldWindowBeClosed();
+			if (close){
+				System.exit(0);
+			}
 		}
 
 		@Override
 		public void windowClosing(WindowEvent e) {
 			super.windowClosing(e);
-			System.out.println("Closing window!");
 			if (shouldWindowBeClosed()) {
 				dispose();
 			}
@@ -322,12 +339,11 @@ class Box extends JFrame{
 		@Override
 		public void windowClosed(WindowEvent e) {
 			super.windowClosed(e);
-			System.out.println("Window closed!");
 			System.exit(0);
 		}
 
-		}
-	class hideLyss implements ActionListener{
+	}
+	class HideListener implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
 			for(Place p : marked){
 				p.setHidden(true);
@@ -335,7 +351,7 @@ class Box extends JFrame{
 			repaint();
 		}
 	}	
-	class hideMouseLyss extends MouseAdapter{
+	class HideMouseListener extends MouseAdapter{
 		@Override
 		public void mouseClicked(MouseEvent mev){
 			if(mev.getButton() == MouseEvent.BUTTON1){
@@ -344,101 +360,104 @@ class Box extends JFrame{
 					marked.remove(p);
 				}else{
 					marked.add(p);
+				}
 			}
 		}
 	}
-}
-	
-	class saveLyss implements ActionListener{
-		public void actionPerformed(ActionEvent ave){
-				try{
-					int answer = chooseFile.showOpenDialog(Box.this);
-					if (answer != JFileChooser.APPROVE_OPTION)        
-						return;
-						FileWriter utfil = new FileWriter(chooseFile.getSelectedFile().getAbsolutePath()); //namn på filen
-						PrintWriter ut = new PrintWriter(utfil);
-				//Typ, kategori, x-koordinat, y-koordinat, namn, (beskrivning)	
-						for(Place p : positionMap.values()){
-							if(p instanceof NamedPlace){
-								ut.println("Named"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
-							p.getPosition().getY() + "," + p.getNamn());
-							}
-							if(p instanceof DescribedPlace){
-								ut.println("Described"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
-										p.getPosition().getY() + "," + p.getNamn() +"," + ((DescribedPlace) p).getBeskrivning());
-							}
-							repaint();
-						}
-				isSaved = true;
-						ut.close();
-						utfil.close();
-						
-					}
-					catch(FileNotFoundException e){
-						JOptionPane.showMessageDialog(null, "Kan inte öppna " + e);
-					}
-					catch(IOException e1){
-						JOptionPane.showMessageDialog(null, "Fel " + e1.getMessage());
-					}
-				}
-			}
 
-
-	class openLyss implements ActionListener{
+	class SaveListener implements ActionListener{
 		public void actionPerformed(ActionEvent ave){
 			try{
-				
 				int answer = chooseFile.showOpenDialog(Box.this);
 				if (answer != JFileChooser.APPROVE_OPTION)        
 					return;
-				FileReader infil = new FileReader(chooseFile.getSelectedFile().getAbsolutePath()); //namn på fil
-				BufferedReader in = new BufferedReader(infil);
+				FileWriter fileWriter = new FileWriter(chooseFile.getSelectedFile().getAbsolutePath());
+				PrintWriter out = new PrintWriter(fileWriter);
+				for(Place p : positionMap.values()){
+					if(p instanceof NamedPlace){
+						out.println("Named"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
+								p.getPosition().getY() + "," + p.getPlaceName());
+					}
+					if(p instanceof DescribedPlace){
+						out.println("Described"+"," + p.getCategory() +"," + p.getPosition().getX() + "," +
+								p.getPosition().getY() + "," + p.getPlaceName() +"," + ((DescribedPlace) p).getDescription());
+					}
+					repaint();
+				}
+				isSaved = true;
+				out.close();
+				fileWriter.close();
+
+			}
+			catch(FileNotFoundException e){
+				JOptionPane.showMessageDialog(null, "Kan inte öppna " + e);
+			}
+			catch(IOException e1){
+				JOptionPane.showMessageDialog(null, "Fel " + e1.getMessage());
+			}
+		}
+	}
+
+
+	class OpenFileListener implements ActionListener{
+		public void actionPerformed(ActionEvent ave){
+			try{
+				if(!isSaved){
+					if(!confirm()){
+						return;
+					}
+				}
+				FileFilter textFilter = new FileNameExtensionFilter("Textdokument","txt");
+				chooseFile.setFileFilter(textFilter);
+				int answer = chooseFile.showOpenDialog(Box.this);
+				if (answer != JFileChooser.APPROVE_OPTION)        
+					return;
+				FileReader fileReader = new FileReader(chooseFile.getSelectedFile().getAbsolutePath());
+				BufferedReader in = new BufferedReader(fileReader);
 				String line;
-							
+
 				while((line = in.readLine()) != null){
 					String [] tokens = line.split(","); 
 					String place = tokens[0]; 
-					String kategori = tokens [1];
+					String category = tokens [1];
 					int x = Integer.parseInt(tokens[2]);
 					int y = Integer.parseInt(tokens[3]);
 					Position position = new Position(x,y);
-					String namn = tokens[4];
-					
-					
+					String name = tokens[4];
+
+
 					Category newCategory = null;
 					for(Category c : categoryArray){
-						if(c.getNamn().equals(kategori)){
+						if(c.getName().equals(category)){
 							newCategory = c;
 						}
-						
+
 					}
 					if(newCategory == null){
 						newCategory = new Category("None", Color.black);
 					}
-					
+
 
 					if(place.equalsIgnoreCase("named")){
-					NamedPlace namedPlace = new NamedPlace(namn, newCategory, position);
+						NamedPlace namedPlace = new NamedPlace(name, newCategory, position);
 						addToCollections(position, namedPlace);
 						picturePanel.setLayout(null);
-					picturePanel.setLayout(null); //Konstig lösning
-					picturePanel.add(namedPlace);
+						picturePanel.add(namedPlace);
 
 					}
 					else{
-					String beskrivning = tokens [5];
-					DescribedPlace describedPlace = new DescribedPlace(namn, newCategory, position, beskrivning);
+						String description = tokens [5];	
+						DescribedPlace describedPlace = new DescribedPlace(name, newCategory, position, description);
 						addToCollections(position, describedPlace);
 						picturePanel.setLayout(null);
-					picturePanel.setLayout(null); //Konstig lösning
-					picturePanel.add(describedPlace);
+						picturePanel.add(describedPlace);
 					}	
 				}
 				isSaved = false;
 				repaint();
 				in.close();
-				infil.close();
-				 
+				fileReader.close();
+
 			}catch(FileNotFoundException e){
 				JOptionPane.showMessageDialog(null, "Kan inte öppna  " + e);
 			}
@@ -448,7 +467,7 @@ class Box extends JFrame{
 
 		}
 	}
-	class MusLyss extends MouseAdapter{
+	class CreatePlaceByMouseClicked extends MouseAdapter{
 		@Override
 		public void mouseClicked(MouseEvent mev){
 
@@ -463,61 +482,67 @@ class Box extends JFrame{
 			else{
 				category = list.getSelectedValue();
 			}
-			Place place = null;
-			String abc = (String) alternativBox.getSelectedItem();
-			switch (abc){
+			String namedOrDescibedPlace = (String) namedOrDescribedBox.getSelectedItem();
+			switch (namedOrDescibedPlace){
 			case "Namn":
 				NamedPlaceFormular npf = new NamedPlaceFormular();
-				int resultat = JOptionPane.showConfirmDialog(null, npf, "Nytt namn ", JOptionPane.OK_CANCEL_OPTION);
+				JOptionPane.showConfirmDialog(null, npf, "Nytt namn ", JOptionPane.OK_CANCEL_OPTION);
 				String name = npf.getNamn();
+				if(name.isEmpty() || name == null){
+					JOptionPane.showMessageDialog(Box.this, "Names can't be empty! Try again", "Wrong", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
 				place = new NamedPlace(name, category, position);
 
 				break;
 			case "Beskrivning":
 				DescribedPlaceFormular dpf = new DescribedPlaceFormular();
-				int resultat2 = JOptionPane.showConfirmDialog(null, dpf, "Ny beskrivning", JOptionPane.OK_CANCEL_OPTION);
+				JOptionPane.showConfirmDialog(null, dpf, "Ny beskrivning", JOptionPane.OK_CANCEL_OPTION);
 				String nameDescription = dpf.getNamn();
 				String description = dpf.getBeskrivning();
+				if(nameDescription.isEmpty() || nameDescription == null || description.isEmpty() || description == null){
+					JOptionPane.showMessageDialog(Box.this, "No empty rows! Try again", "Wrong", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
 				place = new DescribedPlace(nameDescription, category, position, description);
 				break;
 			}
+
 			isSaved = false;
 			picturePanel.add(place);
-			place.addMouseListener(new hideMouseLyss());
 			addToCollections(position, place);
 			list.clearSelection();
-			picturePanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-			picturePanel.removeMouseListener(musLyss);
+			picturePanel.removeMouseListener(createPlaceByMouseClicked);
 			picturePanel.setCursor(Cursor.getDefaultCursor());
-			alternativBox.setEnabled(true);
+			namedOrDescribedBox.setEnabled(true);
 			repaint();
 			picturePanel.validate();
 		}
 	}
-	
-	public void addPlaceToPlaceMap(String name, Place place){
-		if(map.get(name) == null){
-			map.put(name, new ArrayList<Place>());
+
+	private void addPlaceToPlaceMap(String name, Place place){
+		if(nameMap.get(name) == null){
+			nameMap.put(name, new ArrayList<Place>());
 		}
-		map.get(name).add(place);
+		nameMap.get(name).add(place);
 
 	}
-	public void addPlaceToCategory(Category category, Place place){
+	private void addPlaceToCategory(Category category, Place place){
 		if(categoryMap.get(category) == null){
 			categoryMap.put(category, new ArrayList<Place>());
 		}
 		categoryMap.get(category).add(place);
 
-	}
 
-	/**
-	 * Adds new Place to all collections needed for search, category toggling and the position map.
-	 * @param position Position of Place (used as key)
-	 * @param place Place to add to all collections.
-	 */
+	}
 	private void addToCollections(Position position, Place place) {
-		addPlaceToPlaceMap(place.getNamn(), place);
+		addPlaceToPlaceMap(place.getPlaceName(), place);
 		addPlaceToCategory(place.getCategory(), place);
 		positionMap.putIfAbsent(position, place);
+		place.addMouseListener(new HideMouseListener());
+
+	}
+	public static void main(String[] args){
+		new Box();	
 	}
 }

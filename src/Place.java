@@ -1,27 +1,22 @@
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 
 public class Place extends JComponent implements MouseListener { 
 	static final int[] xes = {0, 25, 50},
 			yes = {0, 50, 0};
-	private String namn;
+	private String name;
 	private Category category;
 	private Position position;
 	private boolean isMarked;
 	private boolean unFolded;
 	private boolean hidden;
 	
-	Place(String namn, Category category, Position position){
-		this.namn = namn;
+	Place(String name, Category category, Position position){
+		this.name = name;
 		this.category = category;
 		this.position = position;
 		setBounds(position.getX()-25, position.getY()-50,50,50);
@@ -31,12 +26,12 @@ public class Place extends JComponent implements MouseListener {
 		setOpaque(false);
 		addMouseListener(this);
 	}
-	public String getNamn() {
-		return namn;
+	public String getPlaceName() {
+		return name;
 	}
 
-	public void setNamn(String namn) {
-		this.namn = namn;
+	public void setPlaceName(String name) {
+		this.name = name;
 	}
 	public Position getPosition(){
 		return position;
